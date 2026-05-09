@@ -1,0 +1,17 @@
+# SGIR RIGS Feedback System — Apache configuration
+
+# ── Block access to sensitive files ──────────────────────────────────────────
+<FilesMatch "^\.env(\.example)?$|^setup\.php$|^schema.*\.sql$|^database\.sqlite$|^MEMORY\.md$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ── Disable directory listing ─────────────────────────────────────────────────
+Options -Indexes
+
+# ── Protect uploads directory — no PHP execution ──────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Block PHP execution inside uploads/
+    RewriteRule ^uploads/.*\.(php|phtml|php3|php4|php5|phar)$ - [F,L]
+</IfModule>

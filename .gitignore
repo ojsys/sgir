@@ -1,0 +1,17 @@
+# ── Local development only ────────────────────────────────────────────────
+.env
+database.sqlite
+database.sqlite-wal
+database.sqlite-shm
+setup.php
+schema_sqlite.sql
+
+# ── Uploads (user-generated — managed on server, not in git) ─────────────
+uploads/qrcodes/*.png
+uploads/site/*
+
+# ── OS / IDE noise ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.claude/
