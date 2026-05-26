@@ -21,6 +21,7 @@ if (!verify_csrf($token)) {
 
 // ── Collect & sanitize input ───────────────────────────────────────────────
 $dept_slug   = trim($_POST['dept_slug']       ?? '');
+$location_id = resolve_location_id($pdo, $_POST['location_id'] ?? null);
 $rating      = (int)($_POST['rating']          ?? 0);
 $category    = trim($_POST['category']         ?? '');
 $message     = trim($_POST['message']          ?? '');
@@ -68,12 +69,13 @@ if (!$dept) {
 // ── Insert ─────────────────────────────────────────────────────────────────
 $insert = $pdo->prepare(
     'INSERT INTO feedback
-        (department_id, rating, category, message, is_anonymous, submitter_name, email, phone, status, created_at)
+        (department_id, location_id, rating, category, message, is_anonymous, submitter_name, email, phone, status, created_at)
      VALUES
-        (:dept_id, :rating, :category, :message, :is_anon, :name, :email, :phone, :status, :created_at)'
+        (:dept_id, :location_id, :rating, :category, :message, :is_anon, :name, :email, :phone, :status, :created_at)'
 );
 $insert->execute([
     ':dept_id'    => $dept['id'],
+    ':location_id'=> $location_id,
     ':rating'     => $rating,
     ':category'   => $category,
     ':message'    => $message,

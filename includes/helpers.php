@@ -59,6 +59,33 @@ function get_site_settings(PDO $pdo): array
 }
 
 /**
+ * Fetch all active rig locations, ordered for display.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function get_active_locations(PDO $pdo): array
+{
+    return $pdo->query(
+        'SELECT * FROM rig_locations WHERE is_active = 1 ORDER BY sort_order ASC, name ASC'
+    )->fetchAll();
+}
+
+/**
+ * Resolve a posted/queried location id to a valid active location id.
+ * Returns the integer id when it matches an active location, otherwise null.
+ */
+function resolve_location_id(PDO $pdo, mixed $location_id): ?int
+{
+    $id = (int)$location_id;
+    if ($id < 1) {
+        return null;
+    }
+    $stmt = $pdo->prepare('SELECT id FROM rig_locations WHERE id = :id AND is_active = 1 LIMIT 1');
+    $stmt->execute([':id' => $id]);
+    return $stmt->fetchColumn() ? $id : null;
+}
+
+/**
  * Return a Unicode star-rating string, e.g. "★★★☆☆" for rating 3.
  */
 function star_rating(int $rating): string
@@ -148,6 +175,10 @@ function apply_feedback_filters(PDO $pdo, array $filters): array
         $where[]  = 'f.department_id = :dept_id';
         $params[':dept_id'] = (int)$filters['department_id'];
     }
+    if (!empty($filters['location_id'])) {
+        $where[]  = 'f.location_id = :location_id';
+        $params[':location_id'] = (int)$filters['location_id'];
+    }
     if (!empty($filters['category'])) {
         $where[]  = 'f.category = :category';
         $params[':category'] = $filters['category'];
@@ -190,9 +221,11 @@ function apply_feedback_filters(PDO $pdo, array $filters): array
     $pagination   = paginate($total, $per_page, $current_page);
     $offset       = ($pagination['current_page'] - 1) * $per_page;
 
-    $sql = "SELECT f.*, d.name AS dept_name, d.slug AS dept_slug, d.icon AS dept_icon
+    $sql = "SELECT f.*, d.name AS dept_name, d.slug AS dept_slug, d.icon AS dept_icon,
+                   rl.name AS loc_name, rl.code AS loc_code
             FROM feedback f
             LEFT JOIN departments d ON d.id = f.department_id
+            LEFT JOIN rig_locations rl ON rl.id = f.location_id
             {$whereSql}
             ORDER BY f.created_at DESC
             LIMIT {$per_page} OFFSET {$offset}";

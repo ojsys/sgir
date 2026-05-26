@@ -11,9 +11,11 @@ $settings     = get_site_settings($pdo);
 $current_page = 'medical';
 
 $all_depts = $pdo->query('SELECT id, name FROM departments ORDER BY sort_order, name')->fetchAll();
+$all_locs  = $pdo->query('SELECT id, name FROM rig_locations ORDER BY sort_order, name')->fetchAll();
 
 // ── Filters ───────────────────────────────────────────────────────────────
 $f_dept       = $_GET['department_id'] ?? '';
+$f_loc        = $_GET['location_id']   ?? '';
 $f_reason     = $_GET['visit_reason']  ?? '';
 $f_status     = $_GET['status']        ?? '';
 $f_date_from  = $_GET['date_from']     ?? '';
@@ -28,6 +30,10 @@ $params = [];
 if ($f_dept !== '') {
     $where[]                = 'mf.department_id = :dept_id';
     $params[':dept_id']     = (int)$f_dept;
+}
+if ($f_loc !== '') {
+    $where[]                = 'mf.location_id = :location_id';
+    $params[':location_id'] = (int)$f_loc;
 }
 if ($f_reason !== '') {
     $where[]                = 'mf.visit_reason = :reason';
@@ -64,9 +70,10 @@ $current_page_num = min($current_page_num, $last_page);
 $offset       = ($current_page_num - 1) * $per_page;
 
 $stmt = $pdo->prepare(
-    "SELECT mf.*, d.name AS dept_name, d.icon AS dept_icon
+    "SELECT mf.*, d.name AS dept_name, d.icon AS dept_icon, rl.name AS loc_name
      FROM medical_feedback mf
      LEFT JOIN departments d ON d.id = mf.department_id
+     LEFT JOIN rig_locations rl ON rl.id = mf.location_id
      {$whereSql}
      ORDER BY mf.created_at DESC
      LIMIT {$per_page} OFFSET {$offset}"
@@ -80,7 +87,7 @@ $reason_labels = [
     'mental_health' => '🧠 Mental Health', 'other' => '💬 Other',
 ];
 
-$qs_parts = ['department_id' => $f_dept, 'visit_reason' => $f_reason, 'status' => $f_status,
+$qs_parts = ['department_id' => $f_dept, 'location_id' => $f_loc, 'visit_reason' => $f_reason, 'status' => $f_status,
              'date_from' => $f_date_from, 'date_to' => $f_date_to, 'search' => $f_search];
 $qs_base  = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
 ?>
@@ -127,6 +134,15 @@ $qs_base  = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
               <option value="">All Departments</option>
               <?php foreach ($all_depts as $d): ?>
                 <option value="<?= $d['id'] ?>" <?= $f_dept == $d['id'] ? 'selected' : '' ?>><?= h($d['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rig Location</label>
+            <select name="location_id" class="form-input form-select auto-submit">
+              <option value="">All Locations</option>
+              <?php foreach ($all_locs as $l): ?>
+                <option value="<?= $l['id'] ?>" <?= $f_loc == $l['id'] ? 'selected' : '' ?>><?= h($l['name']) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -191,6 +207,7 @@ $qs_base  = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
             <tr>
               <th>#</th>
               <th>Submitted</th>
+              <th>Location</th>
               <th>Visit Date</th>
               <th>Visit Reason</th>
               <th>Overall Rating</th>
@@ -205,6 +222,7 @@ $qs_base  = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
             <tr>
               <td class="td-id"><?= $row['id'] ?></td>
               <td class="td-date"><?= format_date($row['created_at']) ?></td>
+              <td><?= !empty($row['loc_name']) ? '📍 ' . h($row['loc_name']) : '<span class="text-muted">—</span>' ?></td>
               <td><?= h($row['visit_date']) ?></td>
               <td><?= h($reason_labels[$row['visit_reason']] ?? $row['visit_reason']) ?></td>
               <td class="td-stars">

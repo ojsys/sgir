@@ -12,10 +12,12 @@ $current_page = 'feedback';
 
 // ── Departments for filter select ─────────────────────────────────────────
 $all_depts = $pdo->query('SELECT id, name FROM departments ORDER BY sort_order, name')->fetchAll();
+$all_locs  = $pdo->query('SELECT id, name FROM rig_locations ORDER BY sort_order, name')->fetchAll();
 
 // ── Build filters ─────────────────────────────────────────────────────────
 $filters = [
     'department_id' => $_GET['department_id'] ?? '',
+    'location_id'   => $_GET['location_id']   ?? '',
     'category'      => $_GET['category']      ?? '',
     'status'        => $_GET['status']        ?? '',
     'rating'        => $_GET['rating']        ?? '',
@@ -81,6 +83,17 @@ $qs_base = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
               <?php foreach ($all_depts as $d): ?>
                 <option value="<?= $d['id'] ?>" <?= $filters['department_id'] == $d['id'] ? 'selected' : '' ?>>
                   <?= h($d['name']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rig Location</label>
+            <select name="location_id" class="form-input form-select auto-submit">
+              <option value="">All Locations</option>
+              <?php foreach ($all_locs as $l): ?>
+                <option value="<?= $l['id'] ?>" <?= $filters['location_id'] == $l['id'] ? 'selected' : '' ?>>
+                  <?= h($l['name']) ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -164,6 +177,7 @@ $qs_base = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
               <th>#</th>
               <th>Date &amp; Time</th>
               <th>Department</th>
+              <th>Location</th>
               <th>Category</th>
               <th>Rating</th>
               <th>Message</th>
@@ -182,6 +196,7 @@ $qs_base = http_build_query(array_filter($qs_parts, fn($v) => $v !== ''));
                   <?= $row['dept_icon'] ?? '💬' ?> <?= h($row['dept_name'] ?? $row['other_department'] ?? 'General') ?>
                 </span>
               </td>
+              <td><?= !empty($row['loc_name']) ? '📍 ' . h($row['loc_name']) : '<span class="text-muted">—</span>' ?></td>
               <td><span class="badge badge-<?= h($row['category']) ?>"><?= ucfirst(h($row['category'])) ?></span></td>
               <td class="td-stars"><?= star_rating((int)$row['rating']) ?></td>
               <td class="td-msg"><?= h(mb_substr($row['message'], 0, 80)) ?><?= mb_strlen($row['message']) > 80 ? '…' : '' ?></td>

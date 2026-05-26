@@ -13,6 +13,9 @@ if ($qr_identifier !== '') {
     $stmt->execute([':id' => $qr_identifier]);
 }
 
+// Preserve the QR identifier on the onward link so it survives the location step
+$qr_query = $qr_identifier !== '' ? '&qr=' . urlencode($qr_identifier) : '';
+
 // Load active departments
 $depts = $pdo->query(
     "SELECT * FROM departments WHERE is_active = 1 ORDER BY sort_order ASC, name ASC"
@@ -82,7 +85,7 @@ $logoPath = $settings['logo_path'] ? BASE_URL . '/' . ltrim($settings['logo_path
     <?php else: ?>
       <div class="dept-grid">
         <?php foreach ($depts as $dept): ?>
-          <a href="<?= BASE_URL ?>/feedback/form.php?dept=<?= h($dept['slug']) ?>"
+          <a href="<?= BASE_URL ?>/feedback/location.php?dept=<?= h($dept['slug']) ?><?= $qr_query ?>"
              class="dept-card"
              data-dept="<?= h($dept['slug']) ?>">
             <div class="dept-card-icon"><?= $dept['icon'] ?></div>

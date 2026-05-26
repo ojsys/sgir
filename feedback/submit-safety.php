@@ -19,6 +19,7 @@ if (!verify_csrf($_POST['_token'] ?? '')) {
 
 // ── Collect ────────────────────────────────────────────────────────────────
 $dept_slug          = trim($_POST['dept_slug']          ?? '');
+$location_id        = resolve_location_id($pdo, $_POST['location_id'] ?? null);
 $task_activity      = trim($_POST['task_activity']       ?? '');
 $work_area          = trim($_POST['work_area']           ?? '');
 $safety_observation = trim($_POST['safety_observation']  ?? '');
@@ -81,18 +82,19 @@ if ($dept_slug !== '') {
 // ── Insert ─────────────────────────────────────────────────────────────────
 $insert = $pdo->prepare(
     'INSERT INTO safety_observations
-        (department_id, task_activity, work_area, safety_observation,
+        (department_id, location_id, task_activity, work_area, safety_observation,
          observation_status, stop_work_authority, is_safe, unsafe_act,
          unsafe_condition, near_miss, corrective_action, further_actions,
          observer_name, observer_company, observation_date, status, created_at)
      VALUES
-        (:dept_id, :task, :area, :obs,
+        (:dept_id, :location_id, :task, :area, :obs,
          :obs_status, :swa, :safe, :ua,
          :uc, :nm, :ca, :fa,
          :oname, :ocompany, :odate, :status, :created_at)'
 );
 $insert->execute([
     ':dept_id'    => $dept_id,
+    ':location_id'=> $location_id,
     ':task'       => $task_activity,
     ':area'       => $work_area,
     ':obs'        => $safety_observation,

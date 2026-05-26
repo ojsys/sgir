@@ -15,9 +15,11 @@ $id = (int)($_GET['id'] ?? 0);
 if ($id < 1) redirect(BASE_URL . '/dashboard/medical.php');
 
 $stmt = $pdo->prepare(
-    'SELECT mf.*, d.name AS dept_name, d.icon AS dept_icon
+    'SELECT mf.*, d.name AS dept_name, d.icon AS dept_icon,
+            rl.name AS loc_name, rl.code AS loc_code
      FROM medical_feedback mf
      LEFT JOIN departments d ON d.id = mf.department_id
+     LEFT JOIN rig_locations rl ON rl.id = mf.location_id
      WHERE mf.id = :id LIMIT 1'
 );
 $stmt->execute([':id' => $id]);
@@ -130,6 +132,12 @@ function yn(?string $v, array $map = ['yes' => 'Yes', 'no' => 'No']): string
           </div>
           <div class="card-body">
             <div class="detail-info-grid">
+              <div class="detail-info-item">
+                <span class="detail-info-label">Rig Location</span>
+                <span class="detail-info-value">
+                  <?= !empty($mf['loc_name']) ? '📍 ' . h($mf['loc_name']) : '—' ?>
+                </span>
+              </div>
               <div class="detail-info-item">
                 <span class="detail-info-label">Visit Date</span>
                 <span class="detail-info-value"><?= h($mf['visit_date']) ?></span>

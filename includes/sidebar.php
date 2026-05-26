@@ -17,6 +17,7 @@ $nav_items_all = [
     'safety'    => ['icon' => '⚠️', 'label' => 'Safety Obs', 'url' => BASE_URL . '/dashboard/safety.php',    'roles' => ['admin','supervisor']],
     'medical'   => ['icon' => '🏥', 'label' => 'Medical',     'url' => BASE_URL . '/dashboard/medical.php',   'roles' => ['admin','supervisor']],
     'questions' => ['icon' => '❓', 'label' => 'Questions',   'url' => BASE_URL . '/dashboard/questions.php', 'roles' => ['admin']],
+    'locations' => ['icon' => '📍', 'label' => 'Rig Locations','url' => BASE_URL . '/dashboard/locations.php', 'roles' => ['admin']],
     'export'    => ['icon' => '📥', 'label' => 'Export',      'url' => BASE_URL . '/dashboard/export.php',    'roles' => ['admin']],
     'qrcodes'   => ['icon' => '📱', 'label' => 'QR Codes',    'url' => BASE_URL . '/dashboard/qr-codes.php', 'roles' => ['admin']],
     'users'     => ['icon' => '👥', 'label' => 'Users',       'url' => BASE_URL . '/dashboard/users.php',     'roles' => ['admin']],

@@ -18,9 +18,11 @@ if ($id < 1) {
 
 // Load feedback row
 $stmt = $pdo->prepare(
-    'SELECT f.*, d.name AS dept_name, d.icon AS dept_icon, d.slug AS dept_slug
+    'SELECT f.*, d.name AS dept_name, d.icon AS dept_icon, d.slug AS dept_slug,
+            rl.name AS loc_name, rl.code AS loc_code
      FROM feedback f
      LEFT JOIN departments d ON d.id = f.department_id
+     LEFT JOIN rig_locations rl ON rl.id = f.location_id
      WHERE f.id = :id LIMIT 1'
 );
 $stmt->execute([':id' => $id]);
@@ -137,6 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?= $feedback['dept_icon'] ?? '💬' ?>
                 <?= h($feedback['dept_name'] ?? $feedback['other_department'] ?? 'General') ?>
               </span>
+              <?php if (!empty($feedback['loc_name'])): ?>
+                <span class="dept-badge">📍 <?= h($feedback['loc_name']) ?></span>
+              <?php endif; ?>
               <span class="badge badge-<?= h($feedback['category']) ?>">
                 <?= ucfirst(h($feedback['category'])) ?>
               </span>

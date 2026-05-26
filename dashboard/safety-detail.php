@@ -15,9 +15,11 @@ $id = (int)($_GET['id'] ?? 0);
 if ($id < 1) redirect(BASE_URL . '/dashboard/safety.php');
 
 $stmt = $pdo->prepare(
-    'SELECT so.*, d.name AS dept_name, d.icon AS dept_icon
+    'SELECT so.*, d.name AS dept_name, d.icon AS dept_icon,
+            rl.name AS loc_name, rl.code AS loc_code
      FROM safety_observations so
      LEFT JOIN departments d ON d.id = so.department_id
+     LEFT JOIN rig_locations rl ON rl.id = so.location_id
      WHERE so.id = :id LIMIT 1'
 );
 $stmt->execute([':id' => $id]);
@@ -109,6 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
           <div class="card-body">
             <div class="detail-info-grid">
+              <div class="detail-info-item">
+                <span class="detail-info-label">Rig Location</span>
+                <span class="detail-info-value">
+                  <?= !empty($obs['loc_name']) ? '📍 ' . h($obs['loc_name']) : '—' ?>
+                </span>
+              </div>
               <div class="detail-info-item">
                 <span class="detail-info-label">Task / Activity</span>
                 <span class="detail-info-value"><?= h($obs['task_activity']) ?></span>

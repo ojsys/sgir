@@ -11,9 +11,11 @@ $settings     = get_site_settings($pdo);
 $current_page = 'export';
 
 $all_depts = $pdo->query('SELECT id, name FROM departments ORDER BY sort_order, name')->fetchAll();
+$all_locs  = $pdo->query('SELECT id, name FROM rig_locations ORDER BY sort_order, name')->fetchAll();
 
 $filters = [
     'department_id' => $_GET['department_id'] ?? '',
+    'location_id'   => $_GET['location_id']   ?? '',
     'category'      => $_GET['category']      ?? '',
     'date_from'     => $_GET['date_from']      ?? '',
     'date_to'       => $_GET['date_to']        ?? '',
@@ -68,6 +70,18 @@ $qs = http_build_query(array_filter($filters, fn($v) => $v !== ''));
                 <?php foreach ($all_depts as $d): ?>
                   <option value="<?= $d['id'] ?>" <?= $filters['department_id'] == $d['id'] ? 'selected' : '' ?>>
                     <?= h($d['name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Rig Location</label>
+              <select name="location_id" class="form-input form-select">
+                <option value="">All Locations</option>
+                <?php foreach ($all_locs as $l): ?>
+                  <option value="<?= $l['id'] ?>" <?= $filters['location_id'] == $l['id'] ? 'selected' : '' ?>>
+                    <?= h($l['name']) ?>
                   </option>
                 <?php endforeach; ?>
               </select>

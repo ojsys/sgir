@@ -30,6 +30,7 @@ $cleanRating = function(?string $val): ?int {
 
 // ── Collect ────────────────────────────────────────────────────────────────
 $dept_slug        = trim($_POST['dept_slug']           ?? '');
+$location_id      = resolve_location_id($pdo, $_POST['location_id'] ?? null);
 $visit_date       = trim($_POST['visit_date']           ?? '');
 $visit_reason     = $cleanEnum($_POST['visit_reason']   ?? '', ['injury','illness','routine','medication','emergency','mental_health','other']);
 $visit_reason_oth = trim($_POST['visit_reason_other']   ?? '');
@@ -89,7 +90,7 @@ if ($dept_slug !== '') {
 // ── Insert ─────────────────────────────────────────────────────────────────
 $insert = $pdo->prepare(
     'INSERT INTO medical_feedback (
-        department_id, visit_date, visit_reason, visit_reason_other,
+        department_id, location_id, visit_date, visit_reason, visit_reason_other,
         work_area, is_work_related, response_time, clinic_accessible,
         seen_at_reasonable_time, staff_professionalism, treatment_explained,
         felt_listened_to, privacy_maintained, treatment_appropriate,
@@ -99,7 +100,7 @@ $insert = $pdo->prepare(
         is_anonymous, observer_name, observer_company, employee_id,
         status, created_at
      ) VALUES (
-        :dept_id, :vdate, :vreason, :vr_other,
+        :dept_id, :location_id, :vdate, :vreason, :vr_other,
         :warea, :is_work, :resp_time, :clinic_acc,
         :seen_reas, :staff_prof, :treat_exp,
         :felt_list, :privacy, :treat_app,
@@ -113,6 +114,7 @@ $insert = $pdo->prepare(
 
 $insert->execute([
     ':dept_id'    => $dept_id,
+    ':location_id'=> $location_id,
     ':vdate'      => $visit_date,
     ':vreason'    => $visit_reason,
     ':vr_other'   => $visit_reason === 'other' ? ($visit_reason_oth ?: null) : null,

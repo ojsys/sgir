@@ -15,6 +15,10 @@ if (!empty($_GET['department_id'])) {
     $where[]  = 'f.department_id = :dept_id';
     $params[':dept_id'] = (int)$_GET['department_id'];
 }
+if (!empty($_GET['location_id'])) {
+    $where[]  = 'f.location_id = :location_id';
+    $params[':location_id'] = (int)$_GET['location_id'];
+}
 if (!empty($_GET['category']) && in_array($_GET['category'], ['compliment', 'suggestion', 'complaint'], true)) {
     $where[]  = 'f.category = :category';
     $params[':category'] = $_GET['category'];
@@ -31,11 +35,13 @@ if (!empty($_GET['date_to'])) {
 $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $sql = "SELECT f.id, f.created_at, d.name AS dept_name, f.other_department,
+               rl.name AS loc_name,
                f.category, f.rating, f.message,
                f.is_anonymous, f.submitter_name, f.email, f.phone,
                f.status, f.admin_notes, f.reviewed_at
         FROM feedback f
         LEFT JOIN departments d ON d.id = f.department_id
+        LEFT JOIN rig_locations rl ON rl.id = f.location_id
         {$whereSql}
         ORDER BY f.created_at DESC";
 
@@ -59,7 +65,7 @@ $out = fopen('php://output', 'w');
 
 // Header row
 fputcsv($out, [
-    'ID', 'Date', 'Department', 'Category', 'Rating',
+    'ID', 'Date', 'Department', 'Location', 'Category', 'Rating',
     'Message', 'Anonymous', 'Submitter Name', 'Email', 'Phone',
     'Status', 'Admin Notes', 'Reviewed At',
 ]);
@@ -70,6 +76,7 @@ foreach ($rows as $row) {
         $row['id'],
         $row['created_at'],
         $dept,
+        $row['loc_name'] ?? '',
         $row['category'],
         $row['rating'],
         $row['message'],

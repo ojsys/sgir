@@ -18,11 +18,24 @@ CREATE TABLE IF NOT EXISTS departments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Rig Locations (where the observer is physically located)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rig_locations (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(150) NOT NULL,
+    code       VARCHAR(50)  NULL,
+    is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+    sort_order INT          NOT NULL DEFAULT 0,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Feedback
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS feedback (
     id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     department_id     INT UNSIGNED NULL,
+    location_id       INT UNSIGNED NULL,
     other_department  VARCHAR(150) NULL,
     rating            TINYINT(1)   NOT NULL DEFAULT 3 COMMENT '1-5',
     category          ENUM('compliment','suggestion','complaint') NOT NULL DEFAULT 'suggestion',
@@ -35,7 +48,8 @@ CREATE TABLE IF NOT EXISTS feedback (
     admin_notes       TEXT         NULL,
     created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at       DATETIME     NULL,
-    CONSTRAINT fk_feedback_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    CONSTRAINT fk_feedback_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    CONSTRAINT fk_feedback_loc  FOREIGN KEY (location_id)   REFERENCES rig_locations(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -44,6 +58,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 CREATE TABLE IF NOT EXISTS safety_observations (
     id                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     department_id      INT UNSIGNED NULL,
+    location_id        INT UNSIGNED NULL,
     task_activity      VARCHAR(255) NOT NULL,
     work_area          VARCHAR(255) NOT NULL,
     safety_observation TEXT         NOT NULL,
@@ -62,7 +77,8 @@ CREATE TABLE IF NOT EXISTS safety_observations (
     admin_notes        TEXT         NULL,
     created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at        DATETIME     NULL,
-    CONSTRAINT fk_safety_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    CONSTRAINT fk_safety_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    CONSTRAINT fk_safety_loc  FOREIGN KEY (location_id)   REFERENCES rig_locations(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -71,6 +87,7 @@ CREATE TABLE IF NOT EXISTS safety_observations (
 CREATE TABLE IF NOT EXISTS medical_feedback (
     id                   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     department_id        INT UNSIGNED NULL,
+    location_id          INT UNSIGNED NULL,
     visit_date           DATE         NOT NULL,
     visit_reason         ENUM('injury','illness','routine','medication','emergency','mental_health','other') NOT NULL DEFAULT 'routine',
     visit_reason_other   VARCHAR(255) NULL,
@@ -102,7 +119,8 @@ CREATE TABLE IF NOT EXISTS medical_feedback (
     admin_notes          TEXT         NULL,
     created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at          DATETIME     NULL,
-    CONSTRAINT fk_medical_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    CONSTRAINT fk_medical_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    CONSTRAINT fk_medical_loc  FOREIGN KEY (location_id)   REFERENCES rig_locations(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -197,3 +215,11 @@ INSERT INTO departments (name, slug, icon, is_active, sort_order) VALUES
     ('Administration','administration', '📋',  1, 6),
     ('Other',         'other',          '💬',  1, 7)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- Rig Locations
+INSERT INTO rig_locations (name, code, is_active, sort_order) VALUES
+    ('Onshore Base / Yard', 'BASE',   1, 1),
+    ('Offshore Platform A', 'PLAT-A', 1, 2),
+    ('Offshore Platform B', 'PLAT-B', 1, 3),
+    ('Drilling Rig 1',      'RIG-1',  1, 4),
+    ('Drilling Rig 2',      'RIG-2',  1, 5);

@@ -20,6 +20,31 @@ if (!$dept) {
     redirect(BASE_URL . '/feedback/index.php');
 }
 
+// Preserve QR tracking identifier (set when arriving from a scanned code)
+$qr = trim($_GET['qr'] ?? '');
+
+// ── Rig location ─────────────────────────────────────────────────────────────
+// The observer must pick their rig location before sharing feedback. If
+// locations exist but none was selected, send them to the location layer first.
+// (QR codes link straight here, so this is the single enforcement point.)
+$active_locations = get_active_locations($pdo);
+$location_id      = resolve_location_id($pdo, $_GET['loc'] ?? null);
+$location         = null;
+
+if (!empty($active_locations) && $location_id === null) {
+    $params = ['dept' => $dept_slug];
+    if ($qr !== '') {
+        $params['qr'] = $qr;
+    }
+    redirect(BASE_URL . '/feedback/location.php?' . http_build_query($params));
+}
+
+if ($location_id !== null) {
+    $loc_stmt = $pdo->prepare('SELECT * FROM rig_locations WHERE id = :id LIMIT 1');
+    $loc_stmt->execute([':id' => $location_id]);
+    $location = $loc_stmt->fetch() ?: null;
+}
+
 $settings = get_site_settings($pdo);
 $company  = h($settings['company_name']);
 $logoPath = $settings['logo_path'] ? BASE_URL . '/' . ltrim($settings['logo_path'], '/') : null;
@@ -160,10 +185,23 @@ function render_custom_question(array $q): string
       <?php endif; ?>
       <div class="logo-text">
         <span class="logo-company"><?= $company ?></span>
-        <span class="logo-tagline"><?= h($dept['icon']) ?> <?= h($dept['name']) ?></span>
+        <span class="logo-tagline">
+          <?= h($dept['icon']) ?> <?= h($dept['name']) ?>
+          <?php if ($location): ?>
+            &nbsp;·&nbsp; 📍 <?= h($location['name']) ?>
+          <?php endif; ?>
+        </span>
       </div>
     </div>
-    <a href="<?= BASE_URL ?>/feedback/index.php" class="header-admin-link">← Back</a>
+    <?php
+      // "Back" returns to the location step (so the observer can change location)
+      $back_params = ['dept' => $dept_slug];
+      if ($qr !== '') { $back_params['qr'] = $qr; }
+      $back_url = !empty($active_locations)
+          ? BASE_URL . '/feedback/location.php?' . http_build_query($back_params)
+          : BASE_URL . '/feedback/index.php';
+    ?>
+    <a href="<?= h($back_url) ?>" class="header-admin-link">← Back</a>
   </div>
 </header>
 
@@ -191,6 +229,7 @@ function render_custom_question(array $q): string
     <form id="feedbackForm" novalidate>
       <input type="hidden" name="_token"    value="<?= h($csrf) ?>">
       <input type="hidden" name="dept_slug" value="<?= h($dept_slug) ?>">
+      <input type="hidden" name="location_id" value="<?= $location_id ?? '' ?>">
 
       <!-- Step 1: Rating -->
       <div class="form-step active" id="step1">
@@ -349,6 +388,7 @@ function render_custom_question(array $q): string
     <form id="safetyForm" novalidate>
       <input type="hidden" name="_token"    value="<?= h($csrf) ?>">
       <input type="hidden" name="dept_slug" value="<?= h($dept_slug) ?>">
+      <input type="hidden" name="location_id" value="<?= $location_id ?? '' ?>">
 
       <!-- Step 1: Task & Work Area -->
       <div class="form-step active" id="step1">
@@ -525,6 +565,7 @@ function render_custom_question(array $q): string
     <form id="medicalForm" novalidate>
       <input type="hidden" name="_token"    value="<?= h($csrf) ?>">
       <input type="hidden" name="dept_slug" value="<?= h($dept_slug) ?>">
+      <input type="hidden" name="location_id" value="<?= $location_id ?? '' ?>">
 
       <!-- Step 1: Visit Information -->
       <div class="form-step active" id="step1">
