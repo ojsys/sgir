@@ -94,14 +94,97 @@ foreach ($rating_rows as $r) {
     $rating_map[(int)$r['rating']] = (int)$r['cnt'];
 }
 
-// ── Recent feedback ────────────────────────────────────────────────────────
-$recent = $pdo->query(
-    "SELECT f.*, d.name AS dept_name, d.icon AS dept_icon
+// ── Recent activity (feedback + safety + medical combined) ──────────────────
+$recent_fb = $pdo->query(
+    "SELECT f.id, f.created_at, f.status, f.is_anonymous, f.submitter_name,
+            f.category, f.rating, f.message, f.other_department,
+            d.name AS dept_name, d.icon AS dept_icon
      FROM feedback f
      LEFT JOIN departments d ON d.id = f.department_id
-     ORDER BY f.created_at DESC
-     LIMIT 10"
+     ORDER BY f.created_at DESC LIMIT 10"
 )->fetchAll();
+
+$recent_sa = $pdo->query(
+    "SELECT s.id, s.created_at, s.status, s.observer_name,
+            s.safety_observation, s.observation_status, s.stop_work_authority,
+            d.name AS dept_name, d.icon AS dept_icon
+     FROM safety_observations s
+     LEFT JOIN departments d ON d.id = s.department_id
+     ORDER BY s.created_at DESC LIMIT 10"
+)->fetchAll();
+
+$recent_me = $pdo->query(
+    "SELECT m.id, m.created_at, m.status, m.is_anonymous, m.observer_name,
+            m.visit_reason, m.overall_rating, m.comments, m.urgent_review,
+            d.name AS dept_name, d.icon AS dept_icon
+     FROM medical_feedback m
+     LEFT JOIN departments d ON d.id = m.department_id
+     ORDER BY m.created_at DESC LIMIT 10"
+)->fetchAll();
+
+$recent = [];
+
+foreach ($recent_fb as $r) {
+    $recent[] = [
+        'type'       => 'Feedback',
+        'type_class' => 'feedback',
+        'id'         => (int)$r['id'],
+        'created_at' => $r['created_at'],
+        'dept_icon'  => $r['dept_icon'] ?? '💬',
+        'dept_name'  => $r['dept_name'] ?? $r['other_department'] ?? 'General',
+        'detail'     => '<span class="badge badge-' . h($r['category']) . '">' . ucfirst(h($r['category'])) . '</span>',
+        'rating'     => (int)$r['rating'],
+        'message'    => (string)$r['message'],
+        'submitter'  => $r['is_anonymous'] ? null : ($r['submitter_name'] ?: null),
+        'status'     => $r['status'],
+        'url'        => BASE_URL . '/dashboard/feedback-detail.php?id=' . (int)$r['id'],
+    ];
+}
+
+foreach ($recent_sa as $r) {
+    $detail = $r['stop_work_authority']
+        ? '🛑 Stop Work'
+        : ($r['observation_status'] === 'open' ? '🔴 Open' : '✅ Closed');
+    $recent[] = [
+        'type'       => 'Safety',
+        'type_class' => 'safety',
+        'id'         => (int)$r['id'],
+        'created_at' => $r['created_at'],
+        'dept_icon'  => $r['dept_icon'] ?? '⚠️',
+        'dept_name'  => $r['dept_name'] ?? 'Safety',
+        'detail'     => '<span class="text-muted">' . h($detail) . '</span>',
+        'rating'     => 0,
+        'message'    => (string)$r['safety_observation'],
+        'submitter'  => $r['observer_name'] ?: null,
+        'status'     => $r['status'],
+        'url'        => BASE_URL . '/dashboard/safety-detail.php?id=' . (int)$r['id'],
+    ];
+}
+
+$reason_labels = [
+    'injury' => '🤕 Injury', 'illness' => '🤒 Illness', 'routine' => '🩺 Routine',
+    'medication' => '💊 Medication', 'emergency' => '🚨 Emergency',
+    'mental_health' => '🧠 Mental Health', 'other' => '💬 Other',
+];
+foreach ($recent_me as $r) {
+    $recent[] = [
+        'type'       => 'Medical',
+        'type_class' => 'medical',
+        'id'         => (int)$r['id'],
+        'created_at' => $r['created_at'],
+        'dept_icon'  => $r['dept_icon'] ?? '🏥',
+        'dept_name'  => $r['dept_name'] ?? 'Medical Clinic',
+        'detail'     => '<span class="text-muted">' . h($reason_labels[$r['visit_reason']] ?? ucfirst((string)$r['visit_reason'])) . '</span>',
+        'rating'     => (int)$r['overall_rating'],
+        'message'    => $r['urgent_review'] ? '⚠️ Urgent review — ' . (string)$r['comments'] : (string)$r['comments'],
+        'submitter'  => $r['is_anonymous'] ? null : ($r['observer_name'] ?: null),
+        'status'     => $r['status'],
+        'url'        => BASE_URL . '/dashboard/medical-detail.php?id=' . (int)$r['id'],
+    ];
+}
+
+usort($recent, fn($a, $b) => strcmp($b['created_at'], $a['created_at']));
+$recent = array_slice($recent, 0, 10);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -215,27 +298,27 @@ $recent = $pdo->query(
       </div>
     </div>
 
-    <!-- ─── Recent Feedback ─────────────────────────────────────────────── -->
+    <!-- ─── Recent Activity ─────────────────────────────────────────────── -->
     <div class="card">
       <div class="card-header flex-between">
-        <h3>Recent Feedback</h3>
+        <h3>Recent Activity</h3>
         <a href="<?= BASE_URL ?>/dashboard/feedback.php" class="btn btn-sm btn-outline">View All</a>
       </div>
       <?php if (empty($recent)): ?>
         <div class="empty-state">
           <div class="empty-icon">📭</div>
-          <h4>No feedback yet</h4>
-          <p>Feedback submitted through the portal will appear here.</p>
+          <h4>No submissions yet</h4>
+          <p>Feedback, safety observations, and medical feedback will appear here.</p>
         </div>
       <?php else: ?>
       <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>#</th>
+              <th>Type</th>
               <th>Date</th>
               <th>Department</th>
-              <th>Category</th>
+              <th>Detail</th>
               <th>Rating</th>
               <th>Message</th>
               <th>Submitter</th>
@@ -244,18 +327,18 @@ $recent = $pdo->query(
           </thead>
           <tbody>
             <?php foreach ($recent as $row): ?>
-            <tr>
-              <td class="td-id"><?= $row['id'] ?></td>
+            <tr onclick="window.location='<?= h($row['url']) ?>'" style="cursor:pointer;">
+              <td><span class="badge badge-<?= h($row['type_class']) ?>"><?= h($row['type']) ?></span></td>
               <td class="td-date"><?= format_date($row['created_at']) ?></td>
               <td>
                 <span class="dept-badge">
-                  <?= $row['dept_icon'] ?? '💬' ?> <?= h($row['dept_name'] ?? $row['other_department'] ?? 'General') ?>
+                  <?= $row['dept_icon'] ?> <?= h($row['dept_name']) ?>
                 </span>
               </td>
-              <td><span class="badge badge-<?= h($row['category']) ?>"><?= ucfirst(h($row['category'])) ?></span></td>
-              <td class="td-stars"><?= star_rating((int)$row['rating']) ?></td>
-              <td class="td-msg"><?= h(mb_substr($row['message'], 0, 80)) ?><?= mb_strlen($row['message']) > 80 ? '…' : '' ?></td>
-              <td><?= $row['is_anonymous'] ? '<em class="text-muted">Anonymous</em>' : h($row['submitter_name'] ?: '—') ?></td>
+              <td><?= $row['detail'] ?></td>
+              <td class="td-stars"><?= $row['rating'] > 0 ? star_rating($row['rating']) : '<span class="text-muted">—</span>' ?></td>
+              <td class="td-msg"><?= $row['message'] !== '' ? h(mb_substr($row['message'], 0, 80)) . (mb_strlen($row['message']) > 80 ? '…' : '') : '<span class="text-muted">—</span>' ?></td>
+              <td><?= $row['submitter'] === null ? '<em class="text-muted">Anonymous</em>' : h($row['submitter']) ?></td>
               <td><span class="badge badge-<?= h($row['status']) ?>"><?= ucfirst(h($row['status'])) ?></span></td>
             </tr>
             <?php endforeach; ?>

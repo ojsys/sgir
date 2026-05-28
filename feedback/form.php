@@ -71,17 +71,15 @@ $has_custom_q     = !empty($custom_questions);
 // Step counts per form type (base + optional custom questions step)
 $general_steps = $has_custom_q ? 5 : 4;
 $safety_steps  = $has_custom_q ? 6 : 5;
-$medical_steps = $has_custom_q ? 8 : 7;
+$medical_steps = 2; // Trimmed to two tabs: "Visit & Care" + "Overall & You"
 
 // The custom questions step number in each form
 $gen_cq_step = 4;                                  // always step 4 in general
 $saf_cq_step = 5;                                  // always step 5 in safety
-$med_cq_step = 7;                                  // always step 7 in medical
 
 // The final identity/submit step number per form type
 $gen_id_step = $has_custom_q ? 5 : 4;
 $saf_id_step = $has_custom_q ? 6 : 5;
-$med_id_step = $has_custom_q ? 8 : 7;
 
 /**
  * Render a single custom question as form HTML.
@@ -567,9 +565,9 @@ function render_custom_question(array $q): string
       <input type="hidden" name="dept_slug" value="<?= h($dept_slug) ?>">
       <input type="hidden" name="location_id" value="<?= $location_id ?? '' ?>">
 
-      <!-- Step 1: Visit Information -->
+      <!-- Step 1: Visit & Care -->
       <div class="form-step active" id="step1">
-        <h2 class="step-title medical-title">Visit Information</h2>
+        <h2 class="step-title medical-title">Visit & Care</h2>
         <div class="form-group">
           <label class="form-label required">Date of Visit</label>
           <input type="date" name="visit_date" class="form-input" value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>" required>
@@ -593,25 +591,6 @@ function render_custom_question(array $q): string
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Work Area</label>
-          <input type="text" name="work_area" class="form-input" placeholder="e.g., Drill floor, Engine room...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Is this work-related?</label>
-          <div class="yesno-row">
-            <label class="yesno-btn"><input type="radio" name="is_work_related" value="1"> Yes</label>
-            <label class="yesno-btn active"><input type="radio" name="is_work_related" value="0" checked> No</label>
-          </div>
-        </div>
-        <div class="step-actions">
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="2">Next →</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Access & Timeliness -->
-      <div class="form-step" id="step2">
-        <h2 class="step-title medical-title">Access & Timeliness</h2>
-        <div class="form-group">
           <label class="form-label">How quickly were you seen?</label>
           <div class="likert-row">
             <?php foreach (['immediate'=>'Immediate','quick'=>'Quick','acceptable'=>'Acceptable','slow'=>'Slow','very_slow'=>'Very Slow'] as $v => $l): ?>
@@ -619,29 +598,6 @@ function render_custom_question(array $q): string
             <?php endforeach; ?>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Was the clinic easily accessible?</label>
-          <div class="yesno-row">
-            <label class="yesno-btn"><input type="radio" name="clinic_accessible" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="clinic_accessible" value="no"> No</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Were you seen at a reasonable time?</label>
-          <div class="yesno-row">
-            <label class="yesno-btn"><input type="radio" name="seen_at_reasonable_time" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="seen_at_reasonable_time" value="no"> No</label>
-          </div>
-        </div>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="1">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="3">Next →</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Care Quality -->
-      <div class="form-step" id="step3">
-        <h2 class="step-title medical-title">Quality of Care</h2>
         <div class="form-group">
           <label class="form-label">Staff Professionalism</label>
           <div class="rating-row" data-field="staff_professionalism">
@@ -652,29 +608,6 @@ function render_custom_question(array $q): string
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Was your treatment explained to you?</label>
-          <div class="yesno-row yesno-row--3">
-            <label class="yesno-btn"><input type="radio" name="treatment_explained" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="treatment_explained" value="partially"> Partially</label>
-            <label class="yesno-btn"><input type="radio" name="treatment_explained" value="no"> No</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Did you feel listened to?</label>
-          <div class="yesno-row yesno-row--3">
-            <label class="yesno-btn"><input type="radio" name="felt_listened_to" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="felt_listened_to" value="partially"> Partially</label>
-            <label class="yesno-btn"><input type="radio" name="felt_listened_to" value="no"> No</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Was your privacy maintained?</label>
-          <div class="yesno-row">
-            <label class="yesno-btn"><input type="radio" name="privacy_maintained" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="privacy_maintained" value="no"> No</label>
-          </div>
-        </div>
-        <div class="form-group">
           <label class="form-label">Was the treatment appropriate?</label>
           <div class="yesno-row yesno-row--3">
             <label class="yesno-btn"><input type="radio" name="treatment_appropriate" value="yes"> Yes</label>
@@ -682,84 +615,14 @@ function render_custom_question(array $q): string
             <label class="yesno-btn"><input type="radio" name="treatment_appropriate" value="no"> No</label>
           </div>
         </div>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="2">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="4">Next →</button>
+        <div class="step-actions">
+          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="2">Next →</button>
         </div>
       </div>
 
-      <!-- Step 4: Facilities -->
-      <div class="form-step" id="step4">
-        <h2 class="step-title medical-title">Facilities & Resources</h2>
-        <div class="form-group">
-          <label class="form-label">Cleanliness Rating</label>
-          <div class="rating-row">
-            <?php for ($i=1;$i<=5;$i++): ?>
-              <label class="rating-btn"><input type="radio" name="cleanliness_rating" value="<?= $i ?>"><span><?= $i ?></span></label>
-            <?php endfor; ?>
-            <span class="rating-labels"><span>Poor</span><span>Excellent</span></span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Were required medications available?</label>
-          <div class="yesno-row yesno-row--3">
-            <label class="yesno-btn"><input type="radio" name="medications_available" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="medications_available" value="partially"> Partially</label>
-            <label class="yesno-btn"><input type="radio" name="medications_available" value="no"> No</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Overall facility adequacy</label>
-          <div class="rating-row">
-            <?php for ($i=1;$i<=5;$i++): ?>
-              <label class="rating-btn"><input type="radio" name="facility_adequacy" value="<?= $i ?>"><span><?= $i ?></span></label>
-            <?php endfor; ?>
-            <span class="rating-labels"><span>Poor</span><span>Excellent</span></span>
-          </div>
-        </div>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="3">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="5">Next →</button>
-        </div>
-      </div>
-
-      <!-- Step 5: Outcomes -->
-      <div class="form-step" id="step5">
-        <h2 class="step-title medical-title">Outcomes & Follow-up</h2>
-        <div class="form-group">
-          <label class="form-label">Were you given follow-up instructions?</label>
-          <div class="yesno-row yesno-row--3">
-            <label class="yesno-btn"><input type="radio" name="followup_instructions" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="followup_instructions" value="no"> No</label>
-            <label class="yesno-btn"><input type="radio" name="followup_instructions" value="na"> N/A</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Were you referred for further care?</label>
-          <div class="yesno-row yesno-row--3">
-            <label class="yesno-btn"><input type="radio" name="referred_for_further_care" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="referred_for_further_care" value="no"> No</label>
-            <label class="yesno-btn"><input type="radio" name="referred_for_further_care" value="not_needed"> Not Needed</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Are you fit to return to work?</label>
-          <div class="yesno-row yesno-row--4">
-            <label class="yesno-btn"><input type="radio" name="fit_to_return" value="yes"> Yes</label>
-            <label class="yesno-btn"><input type="radio" name="fit_to_return" value="no"> No</label>
-            <label class="yesno-btn"><input type="radio" name="fit_to_return" value="still_on_sick_bay"> Sick Bay</label>
-            <label class="yesno-btn"><input type="radio" name="fit_to_return" value="na"> N/A</label>
-          </div>
-        </div>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="4">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="6">Next →</button>
-        </div>
-      </div>
-
-      <!-- Step 6: Overall -->
-      <div class="form-step" id="step6">
-        <h2 class="step-title medical-title">Overall Assessment</h2>
+      <!-- Step 2: Overall & You -->
+      <div class="form-step" id="step2">
+        <h2 class="step-title medical-title">Overall & You</h2>
         <div class="form-group">
           <label class="form-label">Overall Experience Rating</label>
           <div class="rating-row">
@@ -788,28 +651,11 @@ function render_custom_question(array $q): string
           <label class="form-label">Additional Comments (optional)</label>
           <textarea name="comments" class="form-textarea" rows="4" placeholder="Any other feedback..." maxlength="2000"></textarea>
         </div>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="5">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="7">Next →</button>
-        </div>
-      </div>
 
-      <?php if ($has_custom_q): ?>
-      <!-- Step 7: Custom Questions -->
-      <div class="form-step" id="step7">
-        <h2 class="step-title medical-title">A few more questions</h2>
-        <p class="step-desc">Please answer the following questions</p>
+        <?php if ($has_custom_q): ?>
         <?php foreach ($custom_questions as $q): echo render_custom_question($q); endforeach; ?>
-        <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="6">← Back</button>
-          <button type="button" class="btn btn-primary btn-lg btn-next" data-next="8">Next →</button>
-        </div>
-      </div>
-      <?php endif; ?>
+        <?php endif; ?>
 
-      <!-- Step <?= $med_id_step ?>: Identity -->
-      <div class="form-step" id="step<?= $med_id_step ?>">
-        <h2 class="step-title medical-title">Your Identity</h2>
         <div class="anon-toggle-row">
           <div class="anon-toggle-label">
             <span class="anon-icon">🔒</span>
@@ -841,7 +687,7 @@ function render_custom_question(array $q): string
         <div class="alert-box" id="formAlert" style="display:none;"></div>
 
         <div class="step-actions two-col">
-          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="<?= $med_id_step - 1 ?>">← Back</button>
+          <button type="button" class="btn btn-outline btn-lg btn-prev" data-prev="1">← Back</button>
           <button type="submit" class="btn btn-accent btn-lg" id="submitBtn">
             <span class="btn-text">Submit Feedback</span>
             <span class="btn-spinner" style="display:none;">⏳</span>

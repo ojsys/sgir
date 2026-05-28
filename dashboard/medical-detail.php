@@ -63,6 +63,17 @@ function yn(?string $v, array $map = ['yes' => 'Yes', 'no' => 'No']): string
 {
     return $v !== null ? (h($map[$v] ?? ucfirst(str_replace('_', ' ', $v)))) : '—';
 }
+
+// Fields the trimmed 2-step form no longer collects. Render them only when an
+// older record still carries a value, so historical data stays visible.
+$legacy_facilities = array_filter(
+    [
+        $mf['cleanliness_rating'], $mf['medications_available'], $mf['facility_adequacy'],
+        $mf['followup_instructions'], $mf['referred_for_further_care'], $mf['fit_to_return'],
+    ],
+    fn($v) => $v !== null && $v !== ''
+);
+$has_legacy_facilities = !empty($legacy_facilities);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -157,10 +168,12 @@ function yn(?string $v, array $map = ['yes' => 'Yes', 'no' => 'No']): string
                 <span class="detail-info-value"><?= h($mf['work_area']) ?></span>
               </div>
               <?php endif; ?>
+              <?php if ($mf['is_work_related']): ?>
               <div class="detail-info-item">
                 <span class="detail-info-label">Work-Related</span>
-                <span class="detail-info-value"><?= $mf['is_work_related'] ? 'Yes' : 'No' ?></span>
+                <span class="detail-info-value">Yes</span>
               </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -174,14 +187,18 @@ function yn(?string $v, array $map = ['yes' => 'Yes', 'no' => 'No']): string
                 <span class="detail-info-label">Response Time</span>
                 <span class="detail-info-value"><?= yn($mf['response_time'], ['immediate'=>'Immediate','quick'=>'Quick','acceptable'=>'Acceptable','slow'=>'Slow','very_slow'=>'Very Slow']) ?></span>
               </div>
+              <?php if ($mf['clinic_accessible'] !== null): ?>
               <div class="detail-info-item">
                 <span class="detail-info-label">Clinic Accessible</span>
                 <span class="detail-info-value"><?= yn($mf['clinic_accessible']) ?></span>
               </div>
+              <?php endif; ?>
+              <?php if ($mf['seen_at_reasonable_time'] !== null): ?>
               <div class="detail-info-item">
                 <span class="detail-info-label">Seen at Reasonable Time</span>
                 <span class="detail-info-value"><?= yn($mf['seen_at_reasonable_time']) ?></span>
               </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -196,61 +213,98 @@ function yn(?string $v, array $map = ['yes' => 'Yes', 'no' => 'No']): string
                 <span class="detail-info-value"><?= $mf['staff_professionalism'] ? star_rating((int)$mf['staff_professionalism']) : '—' ?></span>
               </div>
               <div class="detail-info-item">
+                <span class="detail-info-label">Treatment Appropriate</span>
+                <span class="detail-info-value"><?= yn($mf['treatment_appropriate'], ['yes'=>'Yes','unsure'=>'Unsure','no'=>'No']) ?></span>
+              </div>
+              <?php if ($mf['treatment_explained'] !== null): ?>
+              <div class="detail-info-item">
                 <span class="detail-info-label">Treatment Explained</span>
                 <span class="detail-info-value"><?= yn($mf['treatment_explained'], ['yes'=>'Yes','partially'=>'Partially','no'=>'No']) ?></span>
               </div>
+              <?php endif; ?>
+              <?php if ($mf['felt_listened_to'] !== null): ?>
               <div class="detail-info-item">
                 <span class="detail-info-label">Felt Listened To</span>
                 <span class="detail-info-value"><?= yn($mf['felt_listened_to'], ['yes'=>'Yes','partially'=>'Partially','no'=>'No']) ?></span>
               </div>
+              <?php endif; ?>
+              <?php if ($mf['privacy_maintained'] !== null): ?>
               <div class="detail-info-item">
                 <span class="detail-info-label">Privacy Maintained</span>
                 <span class="detail-info-value"><?= yn($mf['privacy_maintained']) ?></span>
               </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Treatment Appropriate</span>
-                <span class="detail-info-value"><?= yn($mf['treatment_appropriate'], ['yes'=>'Yes','unsure'=>'Unsure','no'=>'No']) ?></span>
-              </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
 
-        <!-- Facilities & Outcomes -->
+        <!-- Overall Assessment -->
         <div class="card mb-4">
-          <div class="card-header"><h3>Facilities &amp; Outcomes</h3></div>
+          <div class="card-header"><h3>Overall Assessment</h3></div>
           <div class="card-body">
             <div class="detail-info-grid">
               <div class="detail-info-item">
-                <span class="detail-info-label">Cleanliness</span>
-                <span class="detail-info-value"><?= $mf['cleanliness_rating'] ? star_rating((int)$mf['cleanliness_rating']) : '—' ?></span>
-              </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Medications Available</span>
-                <span class="detail-info-value"><?= yn($mf['medications_available'], ['yes'=>'Yes','partially'=>'Partially','no'=>'No']) ?></span>
-              </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Facility Adequacy</span>
-                <span class="detail-info-value"><?= $mf['facility_adequacy'] ? star_rating((int)$mf['facility_adequacy']) : '—' ?></span>
-              </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Follow-up Instructions</span>
-                <span class="detail-info-value"><?= yn($mf['followup_instructions'], ['yes'=>'Yes','no'=>'No','na'=>'N/A']) ?></span>
-              </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Referred for Further Care</span>
-                <span class="detail-info-value"><?= yn($mf['referred_for_further_care'], ['yes'=>'Yes','no'=>'No','not_needed'=>'Not Needed']) ?></span>
-              </div>
-              <div class="detail-info-item">
-                <span class="detail-info-label">Fit to Return to Work</span>
-                <span class="detail-info-value"><?= yn($mf['fit_to_return'], ['yes'=>'Yes','no'=>'No','still_on_sick_bay'=>'Still on Sick Bay','na'=>'N/A']) ?></span>
+                <span class="detail-info-label">Overall Rating</span>
+                <span class="detail-info-value"><?= $mf['overall_rating'] ? star_rating((int)$mf['overall_rating']) : '—' ?></span>
               </div>
               <div class="detail-info-item">
                 <span class="detail-info-label">Would Use Clinic Again</span>
                 <span class="detail-info-value"><?= yn($mf['confident_future_use'], ['yes'=>'Yes','maybe'=>'Maybe','no'=>'No']) ?></span>
               </div>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Urgent Review</span>
+                <span class="detail-info-value"><?= $mf['urgent_review'] ? 'Yes' : 'No' ?></span>
+              </div>
             </div>
           </div>
         </div>
+
+        <?php if ($has_legacy_facilities): ?>
+        <!-- Facilities & Outcomes (older records only) -->
+        <div class="card mb-4">
+          <div class="card-header"><h3>Facilities &amp; Outcomes</h3></div>
+          <div class="card-body">
+            <div class="detail-info-grid">
+              <?php if ($mf['cleanliness_rating']): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Cleanliness</span>
+                <span class="detail-info-value"><?= star_rating((int)$mf['cleanliness_rating']) ?></span>
+              </div>
+              <?php endif; ?>
+              <?php if ($mf['medications_available'] !== null): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Medications Available</span>
+                <span class="detail-info-value"><?= yn($mf['medications_available'], ['yes'=>'Yes','partially'=>'Partially','no'=>'No']) ?></span>
+              </div>
+              <?php endif; ?>
+              <?php if ($mf['facility_adequacy']): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Facility Adequacy</span>
+                <span class="detail-info-value"><?= star_rating((int)$mf['facility_adequacy']) ?></span>
+              </div>
+              <?php endif; ?>
+              <?php if ($mf['followup_instructions'] !== null): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Follow-up Instructions</span>
+                <span class="detail-info-value"><?= yn($mf['followup_instructions'], ['yes'=>'Yes','no'=>'No','na'=>'N/A']) ?></span>
+              </div>
+              <?php endif; ?>
+              <?php if ($mf['referred_for_further_care'] !== null): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Referred for Further Care</span>
+                <span class="detail-info-value"><?= yn($mf['referred_for_further_care'], ['yes'=>'Yes','no'=>'No','not_needed'=>'Not Needed']) ?></span>
+              </div>
+              <?php endif; ?>
+              <?php if ($mf['fit_to_return'] !== null): ?>
+              <div class="detail-info-item">
+                <span class="detail-info-label">Fit to Return to Work</span>
+                <span class="detail-info-value"><?= yn($mf['fit_to_return'], ['yes'=>'Yes','no'=>'No','still_on_sick_bay'=>'Still on Sick Bay','na'=>'N/A']) ?></span>
+              </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+        <?php endif; ?>
 
         <?php if ($mf['comments']): ?>
         <div class="card mb-4">

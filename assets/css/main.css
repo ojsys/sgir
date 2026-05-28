@@ -152,6 +152,9 @@ input, select, textarea { font-family: inherit; }
 .badge-new        { background: #fef3c7; color: #92400e; }
 .badge-reviewed   { background: #dbeafe; color: #1e40af; }
 .badge-actioned   { background: #dcfce7; color: #166534; }
+.badge-feedback   { background: #e0e7ff; color: #3730a3; }
+.badge-safety     { background: #fee2e2; color: #991b1b; }
+.badge-medical    { background: #cffafe; color: #155e75; }
 
 /* ── Department badge ──────────────────────────────────────────────────── */
 .dept-badge {
