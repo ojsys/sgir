@@ -8,7 +8,7 @@ users. It only shares the `.env` database settings.
 1. Upload the `materials/` folder with the rest of the site. No SQL import is needed.
 2. Open `https://your-site/materials/`. On first load the tables are created and the
    **SGIR Item Master** (`data/item_master.csv`, 1,369 items) is loaded as the opening stock.
-3. You'll be sent to **setup.php** to create the first administrator. This page locks itself
+3. You'll be sent to **first-run.php** to create the first administrator. This page locks itself
    as soon as one account exists, so do this right after deploying.
 4. Go to **Users & Access** and add warehouse managers, toolpushers and other staff.
 

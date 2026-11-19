@@ -6,7 +6,7 @@ mat_session();
 
 // First run: no users yet → create the first administrator
 if ((int)$pdo->query('SELECT COUNT(*) FROM mat_users')->fetchColumn() === 0) {
-    mat_redirect(MAT_URL . '/setup.php');
+    mat_redirect(MAT_URL . '/first-run.php');
 }
 if (mat_user()) {
     mat_redirect(MAT_URL . '/index.php');
