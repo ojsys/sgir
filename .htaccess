@@ -6,6 +6,9 @@
     Deny from all
 </FilesMatch>
 
+# ── Block the git repository folder and git metadata files ────────────────────
+RedirectMatch 404 /\.git
+
 # ── Disable directory listing ─────────────────────────────────────────────────
 Options -Indexes
 
