@@ -1,0 +1,6 @@
+# SGIR Materials — block direct access to internals
+Options -Indexes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(includes|data)/ - [F,L]
+</IfModule>
